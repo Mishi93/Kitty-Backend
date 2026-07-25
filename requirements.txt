@@ -4,3 +4,4 @@ sqlalchemy
 pydantic
 groq
 python-dotenv
+youtube-transcript-api
