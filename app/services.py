@@ -3,8 +3,8 @@ import json
 import uuid
 from groq import Groq
 from sqlalchemy.orm import Session
-from app.models import Skill, ChatSession, ChatMessage, SuggestedSkillLog
-from app.schemas import GroqChatLLMOutput
+from models import Skill, ChatSession, ChatMessage, SuggestedSkillLog
+from schemas import GroqChatLLMOutput
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
