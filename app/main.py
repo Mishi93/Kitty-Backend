@@ -11,9 +11,10 @@ from sqlalchemy.orm import Session
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 from groq import Groq
 
-from app.database import engine, Base, get_db
-from app.models import Skill, RoadmapStep, SuggestedSkillLog, UserSavedSkill
-from app.schemas import (
+# Direct imports from the same directory
+from database import engine, Base, get_db
+from models import Skill, RoadmapStep, SuggestedSkillLog, UserSavedSkill
+from schemas import (
     ChatRequest, 
     ChatResponse, 
     SuggestedSkill, 
@@ -23,7 +24,7 @@ from app.schemas import (
     SaveSkillResponse,
     SavedSkillItem
 )
-from app.services import process_chat_session
+from services import process_chat_session
 
 # -------------------------------------------------------------------
 # Environment & LLM Client Setup
@@ -111,7 +112,7 @@ def get_active_groq_client() -> Groq:
     return groq_client
 
 # -------------------------------------------------------------------
-# Additional Request / Response Schemas
+# Request / Response Schemas for Roadmap Tools
 # -------------------------------------------------------------------
 class AnalyzeVideoRequest(BaseModel):
     roadmap_id: str = Field(..., example="roadmap_react_native_101")
@@ -149,9 +150,8 @@ class CodingChallengeResponse(BaseModel):
     hints: List[str]
     expected_output_or_criteria: str
 
-
 # -------------------------------------------------------------------
-# Existing Endpoints
+# Endpoints
 # -------------------------------------------------------------------
 
 # --- Endpoint 1: Chat API ---
@@ -171,7 +171,6 @@ def chat_endpoint(payload: ChatRequest, db: Session = Depends(get_db)):
         is_finished=llm_output.is_finished,
         suggested_skills=suggested_skills
     )
-
 
 # --- Endpoint 2: Skill Roadmap API ---
 @app.get("/api/skills/{skill_id}/roadmap", response_model=SkillRoadmapResponse)
@@ -196,7 +195,6 @@ def get_skill_roadmap(skill_id: str, db: Session = Depends(get_db)):
         roadmap=[RoadmapStepSchema.model_validate(step) for step in steps]
     )
 
-
 # --- Endpoint 3: Get All AI Suggested Skills ---
 @app.get("/api/skills/suggested", response_model=List[SuggestedSkill])
 def get_all_suggested_skills(session_id: Optional[str] = None, db: Session = Depends(get_db)):
@@ -207,7 +205,6 @@ def get_all_suggested_skills(session_id: Optional[str] = None, db: Session = Dep
 
     suggested_skills = query.distinct().all()
     return [SuggestedSkill.model_validate(s) for s in suggested_skills]
-
 
 # --- Endpoint 4: Save Favorite Skill ---
 @app.post("/api/skills/save", response_model=SaveSkillResponse)
@@ -246,7 +243,6 @@ def save_favorite_skill(payload: SaveSkillRequest, db: Session = Depends(get_db)
         skill=SuggestedSkill.model_validate(skill)
     )
 
-
 # --- Endpoint 5: Get Saved/Favorite Skills ---
 @app.get("/api/skills/saved", response_model=List[SavedSkillItem])
 def get_saved_skills(user_id: Optional[str] = "default_user", db: Session = Depends(get_db)):
@@ -269,11 +265,6 @@ def get_saved_skills(user_id: Optional[str] = "default_user", db: Session = Depe
         )
         for item in saved_entries
     ]
-
-
-# -------------------------------------------------------------------
-# New Endpoints
-# -------------------------------------------------------------------
 
 # --- Endpoint 6: Analyze Video for Roadmap Step ---
 @app.post("/api/v1/roadmap/analyze-video", response_model=AnalyzeVideoResponse)
@@ -329,7 +320,6 @@ async def analyze_video_for_step(payload: AnalyzeVideoRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM processing failed: {str(e)}")
-
 
 # --- Endpoint 7: Generate Coding Challenge ---
 @app.post("/api/v1/roadmap/generate-challenge", response_model=CodingChallengeResponse)
